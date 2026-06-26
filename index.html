@@ -53,10 +53,8 @@ Press ESC at any time to cloak this page.</div>
       <span class="icon-glyph">◈</span>
       <span class="icon-label">Games</span>
     </button>
-    <!-- settings gear – left of clock, no text -->
-    <button class="taskbar-icon" id="btn-settings" onclick="toggleSettings()" title="Settings" style="background:none; border:none; color:#ccc; font-size:20px; cursor:pointer; padding:0 10px; display:flex; align-items:center;">
-      <span style="font-size:22px;">⚙</span>
-    </button>
+    <!-- settings gear – positioned right before clock -->
+    <button id="btn-settings" onclick="toggleSettings()" title="Settings">⚙</button>
     <div class="taskbar-clock" id="clock"></div>
   </div>
 </div>
@@ -140,7 +138,7 @@ function startClock() {
 // ── Window manager ───────────────────────────────────────────────
 let searchWin = null;
 let gamesWin  = null;
-let settingsWin = null;   // settings window handle
+let settingsWin = null;
 let zTop = 10;
 
 function toggleSearch() {
@@ -179,8 +177,8 @@ function createSettingsWindow() {
   el.style.height = h + 'px';
   el.style.zIndex = ++zTop;
 
-  // current mode (default)
   let currentMode = 'Default';
+  let cacheBuster = Date.now(); // for favicon cache busting
 
   el.innerHTML = `
     <div class="window-titlebar">
@@ -212,10 +210,8 @@ function createSettingsWindow() {
   area.appendChild(el);
   requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('open')));
 
-  // bring to front
   el.addEventListener('mousedown', () => { el.style.zIndex = ++zTop; }, true);
 
-  // close button
   const closeBtn = el.querySelector('.close');
   function closeWin() {
     el.classList.remove('open');
@@ -225,7 +221,6 @@ function createSettingsWindow() {
   }
   closeBtn.addEventListener('click', closeWin);
 
-  // drag
   const titlebar = el.querySelector('.window-titlebar');
   let dragging = false, dragOX = 0, dragOY = 0;
   titlebar.addEventListener('mousedown', (e) => {
@@ -237,7 +232,6 @@ function createSettingsWindow() {
     e.preventDefault();
   });
 
-  // resize handles (basic)
   let resizing = false, resDir = '', resSX, resSY, resSW, resSH, resSL, resST;
   el.querySelectorAll('.rh').forEach(handle => {
     handle.addEventListener('mousedown', (e) => {
@@ -277,12 +271,10 @@ function createSettingsWindow() {
   document.addEventListener('mousemove', onMouseMove);
   document.addEventListener('mouseup', onMouseUp);
 
-  // ── dropdown logic ─────────────────────────────────────────────
+  // ── dropdown logic with cache-busting favicon ──────────────────
   const dropdown = el.querySelector('#settings-dropdown');
-  // set default
   dropdown.value = 'Default';
 
-  // apply mode function
   function applyMode(mode) {
     let title, favicon;
     switch (mode) {
@@ -313,7 +305,8 @@ function createSettingsWindow() {
       link.rel = 'icon';
       document.head.appendChild(link);
     }
-    link.href = favicon;
+    // Add cache-busting query parameter to force favicon refresh
+    link.href = favicon + (favicon.includes('?') ? '&' : '?') + 'v=' + Date.now();
   }
 
   // initial apply (Default)
@@ -325,14 +318,12 @@ function createSettingsWindow() {
     applyMode(val);
   });
 
-  // cleanup on close
   const origClose = closeWin;
   const onClose = () => {
     document.removeEventListener('mousemove', onMouseMove);
     document.removeEventListener('mouseup', onMouseUp);
     settingsWin = null;
   };
-  // override close
   const closeWrapper = () => {
     origClose();
     onClose();
@@ -443,90 +434,4 @@ function createWindow({ title, url, x, y, w, h, onClose }) {
     if (resDir.includes('s')) nh = Math.max(180, resSH + dy);
     if (resDir.includes('w')) { nw = Math.max(280, resSW - dx); nx = resSL + resSW - nw; }
     if (resDir.includes('n')) { nh = Math.max(180, resSH - dy); ny = resST + resSH - nh; }
-    el.style.left = nx + 'px'; el.style.top = ny + 'px';
-    el.style.width = nw + 'px'; el.style.height = nh + 'px';
-    rect = { x: nx, y: ny, w: nw, h: nh };
-  }
-  function onMouseUp() {
-    if (dragging) { dragging = false; el.classList.remove('dragging'); }
-    resizing = false;
-  }
-  document.addEventListener('mousemove', onMouseMove);
-  document.addEventListener('mouseup', onMouseUp);
-
-  el.dataset.prevLeft = rect.x + 'px';
-  el.dataset.prevTop = rect.y + 'px';
-  el.dataset.prevWidth = rect.w + 'px';
-  el.dataset.prevHeight = rect.h + 'px';
-
-  function toggleMaximize(winEl) {
-    if (winEl.classList.contains('maximized')) {
-      winEl.classList.remove('maximized');
-      winEl.style.left = winEl.dataset.prevLeft || '100px';
-      winEl.style.top = winEl.dataset.prevTop || '100px';
-      winEl.style.width = winEl.dataset.prevWidth || '400px';
-      winEl.style.height = winEl.dataset.prevHeight || '300px';
-    } else {
-      winEl.dataset.prevLeft = winEl.style.left;
-      winEl.dataset.prevTop = winEl.style.top;
-      winEl.dataset.prevWidth = winEl.style.width;
-      winEl.dataset.prevHeight = winEl.style.height;
-      winEl.classList.add('maximized');
-      winEl.style.left = '0px';
-      winEl.style.top = '0px';
-      winEl.style.width = window.innerWidth + 'px';
-      winEl.style.height = window.innerHeight + 'px';
-    }
-  }
-
-  return { close: closeWin, toggleMaximize };
-}
-
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-window.addEventListener('message', (e) => {
-  if (e.data && e.data.type === '__workspace_open__' && typeof e.data.url === 'string') {
-    createWindow({
-      title: (() => { try { return new URL(e.data.url).hostname.replace(/^www\./, ''); } catch { return 'Browser'; } })(),
-      url: e.data.url,
-      x: 160 + (Math.random() * 60 | 0),
-      y: 100 + (Math.random() * 40 | 0),
-      w: 860,
-      h: 560,
-      onClose: null,
-    });
-  }
-});
-
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    const fullscreenLayer = document.getElementById('fullscreen-layer');
-    const workspace = document.getElementById('workspace');
-    if (isInWorkspace) {
-      workspace.classList.remove('active');
-      fullscreenLayer.classList.remove('hidden');
-      isInWorkspace = false;
-      workspaceLoaded = false;
-    } else {
-      fullscreenLayer.classList.add('hidden');
-      showPhase('loading');
-      runLoadingScreen(() => { showPhase('explore'); });
-    }
-  }
-});
-
-function resizeMaximizedWindows() {
-  document.querySelectorAll('.app-window.maximized').forEach(win => {
-    win.style.left = '0px';
-    win.style.top = '0px';
-    win.style.width = window.innerWidth + 'px';
-    win.style.height = window.innerHeight + 'px';
-  });
-}
-document.addEventListener('fullscreenchange', resizeMaximizedWindows);
-window.addEventListener('resize', resizeMaximizedWindows);
-</script>
-</body>
-</html>
+    el.style.left = nx + 'px'; el.style.top = ny + 'px
