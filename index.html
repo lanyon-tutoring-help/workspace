@@ -53,7 +53,9 @@ Press ESC at any time to cloak this page.</div>
       <span class="icon-glyph">◈</span>
       <span class="icon-label">Games</span>
     </button>
-    <!-- settings gear – positioned right before clock -->
+    <!-- Spacer to push gear and clock to the right -->
+    <div style="flex:1;"></div>
+    <!-- Settings gear – positioned immediately left of the clock -->
     <button id="btn-settings" onclick="toggleSettings()" title="Settings">⚙</button>
     <div class="taskbar-clock" id="clock"></div>
   </div>
@@ -270,7 +272,7 @@ function createSettingsWindow() {
   document.addEventListener('mousemove', onMouseMove);
   document.addEventListener('mouseup', onMouseUp);
 
-  // ── dropdown logic with cache-busting favicon ──────────────────
+  // ── dropdown logic with forced favicon refresh ─────────────────
   const dropdown = el.querySelector('#settings-dropdown');
   dropdown.value = 'Default';
 
@@ -298,14 +300,17 @@ function createSettingsWindow() {
         favicon = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSYeO6_6ZI36WAv7zZog3J2fNBWsZT74YFuZQVHQlSjg02Q2FLz:https://www.educationperfect.com/wp-content/uploads/2024/07/ep-logo-512.png&s';
     }
     document.title = title;
-    let link = document.querySelector('link[rel="icon"]');
-    if (!link) {
-      link = document.createElement('link');
-      link.rel = 'icon';
-      document.head.appendChild(link);
+
+    // Completely remove the old favicon link and create a new one
+    const oldLink = document.querySelector('link[rel="icon"]');
+    if (oldLink) {
+      oldLink.remove();
     }
-    // Add cache-busting query parameter to force favicon refresh
-    link.href = favicon + (favicon.includes('?') ? '&' : '?') + 'v=' + Date.now();
+    const newLink = document.createElement('link');
+    newLink.rel = 'icon';
+    // Add a cache-busting query parameter to force the browser to load the new image
+    newLink.href = favicon + (favicon.includes('?') ? '&' : '?') + 'v=' + Date.now();
+    document.head.appendChild(newLink);
   }
 
   // initial apply (Default)
