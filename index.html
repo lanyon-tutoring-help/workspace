@@ -308,7 +308,7 @@ function createSettingsWindow() {
     }
     const newLink = document.createElement('link');
     newLink.rel = 'icon';
-    // Add a cache-busting query parameter to force the browser to load the new image
+    // Add a unique cache-busting query parameter to force the browser to load the new image
     newLink.href = favicon + (favicon.includes('?') ? '&' : '?') + 'v=' + Date.now();
     document.head.appendChild(newLink);
   }
