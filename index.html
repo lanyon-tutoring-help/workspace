@@ -53,6 +53,10 @@ Press ESC at any time to cloak this page.</div>
       <span class="icon-glyph">◈</span>
       <span class="icon-label">Games</span>
     </button>
+    <!-- settings gear – left of clock, no text -->
+    <button class="taskbar-icon" id="btn-settings" onclick="toggleSettings()" title="Settings" style="background:none; border:none; color:#ccc; font-size:20px; cursor:pointer; padding:0 10px; display:flex; align-items:center;">
+      <span style="font-size:22px;">⚙</span>
+    </button>
     <div class="taskbar-clock" id="clock"></div>
   </div>
 </div>
@@ -136,6 +140,7 @@ function startClock() {
 // ── Window manager ───────────────────────────────────────────────
 let searchWin = null;
 let gamesWin  = null;
+let settingsWin = null;   // settings window handle
 let zTop = 10;
 
 function toggleSearch() {
@@ -148,16 +153,204 @@ function toggleGames() {
   else { gamesWin = createWindow({ title: 'Games', url: GAMES_URL, x: 120, y: 80, w: 860, h: 560, onClose: () => { gamesWin = null; document.getElementById('btn-games').classList.remove('open'); } }); document.getElementById('btn-games').classList.add('open'); }
 }
 
-// ── createWindow ─────────────────────────────────────────────────
+// ── Settings toggle ──────────────────────────────────────────────
+function toggleSettings() {
+  if (settingsWin) {
+    settingsWin.close();
+    settingsWin = null;
+  } else {
+    settingsWin = createSettingsWindow();
+  }
+}
+
+// ── Settings window (custom content) ─────────────────────────────
+function createSettingsWindow() {
+  const area = document.getElementById('windows-area');
+  const areaH = area.offsetHeight;
+  const w = 320, h = 180;
+  let x = Math.max(0, (area.offsetWidth - w) / 2);
+  let y = Math.max(0, (areaH - h) / 2);
+
+  const el = document.createElement('div');
+  el.className = 'app-window';
+  el.style.left = x + 'px';
+  el.style.top  = y + 'px';
+  el.style.width  = w + 'px';
+  el.style.height = h + 'px';
+  el.style.zIndex = ++zTop;
+
+  // current mode (default)
+  let currentMode = 'Default';
+
+  el.innerHTML = `
+    <div class="window-titlebar">
+      <span class="window-title">Settings</span>
+      <div class="window-controls">
+        <button class="window-btn close" title="Close">&#x2715;</button>
+      </div>
+    </div>
+    <div class="window-content" style="padding:16px; display:flex; flex-direction:column; gap:8px; background:#252526;">
+      <div class="settings-label">Tab appearance</div>
+      <select class="settings-dropdown" id="settings-dropdown">
+        <option value="Default">Default</option>
+        <option value="Google Classroom">Google Classroom</option>
+        <option value="Google Drive">Google Drive</option>
+        <option value="Education Perfect">Education Perfect</option>
+      </select>
+      <div style="color:#888; font-size:12px; margin-top:4px;">Changes apply immediately.</div>
+    </div>
+    <div class="rh rh-n"  data-dir="n"></div>
+    <div class="rh rh-s"  data-dir="s"></div>
+    <div class="rh rh-e"  data-dir="e"></div>
+    <div class="rh rh-w"  data-dir="w"></div>
+    <div class="rh rh-ne" data-dir="ne"></div>
+    <div class="rh rh-nw" data-dir="nw"></div>
+    <div class="rh rh-se" data-dir="se"></div>
+    <div class="rh rh-sw" data-dir="sw"></div>
+  `;
+
+  area.appendChild(el);
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('open')));
+
+  // bring to front
+  el.addEventListener('mousedown', () => { el.style.zIndex = ++zTop; }, true);
+
+  // close button
+  const closeBtn = el.querySelector('.close');
+  function closeWin() {
+    el.classList.remove('open');
+    el.style.transform = 'scale(0.93)';
+    el.style.opacity = '0';
+    setTimeout(() => { el.remove(); if (onClose) onClose(); }, 220);
+  }
+  closeBtn.addEventListener('click', closeWin);
+
+  // drag
+  const titlebar = el.querySelector('.window-titlebar');
+  let dragging = false, dragOX = 0, dragOY = 0;
+  titlebar.addEventListener('mousedown', (e) => {
+    if (e.target.closest('.window-controls')) return;
+    dragging = true;
+    dragOX = e.clientX - el.offsetLeft;
+    dragOY = e.clientY - el.offsetTop;
+    el.classList.add('dragging');
+    e.preventDefault();
+  });
+
+  // resize handles (basic)
+  let resizing = false, resDir = '', resSX, resSY, resSW, resSH, resSL, resST;
+  el.querySelectorAll('.rh').forEach(handle => {
+    handle.addEventListener('mousedown', (e) => {
+      resizing = true;
+      resDir = handle.dataset.dir;
+      resSX = e.clientX; resSY = e.clientY;
+      resSW = el.offsetWidth; resSH = el.offsetHeight;
+      resSL = el.offsetLeft;  resST = el.offsetTop;
+      e.preventDefault();
+      e.stopPropagation();
+    });
+  });
+
+  function onMouseMove(e) {
+    if (dragging) {
+      const nx = e.clientX - dragOX;
+      const ny = Math.max(0, e.clientY - dragOY);
+      el.style.left = nx + 'px';
+      el.style.top  = ny + 'px';
+      return;
+    }
+    if (!resizing) return;
+    const dx = e.clientX - resSX;
+    const dy = e.clientY - resSY;
+    let nx = resSL, ny = resST, nw = resSW, nh = resSH;
+    if (resDir.includes('e')) nw = Math.max(280, resSW + dx);
+    if (resDir.includes('s')) nh = Math.max(180, resSH + dy);
+    if (resDir.includes('w')) { nw = Math.max(280, resSW - dx); nx = resSL + resSW - nw; }
+    if (resDir.includes('n')) { nh = Math.max(180, resSH - dy); ny = resST + resSH - nh; }
+    el.style.left = nx + 'px'; el.style.top = ny + 'px';
+    el.style.width = nw + 'px'; el.style.height = nh + 'px';
+  }
+  function onMouseUp() {
+    if (dragging) { dragging = false; el.classList.remove('dragging'); }
+    resizing = false;
+  }
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mouseup', onMouseUp);
+
+  // ── dropdown logic ─────────────────────────────────────────────
+  const dropdown = el.querySelector('#settings-dropdown');
+  // set default
+  dropdown.value = 'Default';
+
+  // apply mode function
+  function applyMode(mode) {
+    let title, favicon;
+    switch (mode) {
+      case 'Default':
+        title = 'Education Perfect';
+        favicon = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSYeO6_6ZI36WAv7zZog3J2fNBWsZT74YFuZQVHQlSjg02Q2FLz:https://www.educationperfect.com/wp-content/uploads/2024/07/ep-logo-512.png&s';
+        break;
+      case 'Google Classroom':
+        title = 'Google Classroom';
+        favicon = 'https://ssl.gstatic.com/classroom/ic_product_classroom_144.png';
+        break;
+      case 'Google Drive':
+        title = 'Google Drive';
+        favicon = 'https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png';
+        break;
+      case 'Education Perfect':
+        title = 'Education Perfect';
+        favicon = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSYeO6_6ZI36WAv7zZog3J2fNBWsZT74YFuZQVHQlSjg02Q2FLz:https://www.educationperfect.com/wp-content/uploads/2024/07/ep-logo-512.png&s';
+        break;
+      default:
+        title = 'Education Perfect';
+        favicon = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSYeO6_6ZI36WAv7zZog3J2fNBWsZT74YFuZQVHQlSjg02Q2FLz:https://www.educationperfect.com/wp-content/uploads/2024/07/ep-logo-512.png&s';
+    }
+    document.title = title;
+    let link = document.querySelector('link[rel="icon"]');
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      document.head.appendChild(link);
+    }
+    link.href = favicon;
+  }
+
+  // initial apply (Default)
+  applyMode('Default');
+
+  dropdown.addEventListener('change', function() {
+    const val = this.value;
+    currentMode = val;
+    applyMode(val);
+  });
+
+  // cleanup on close
+  const origClose = closeWin;
+  const onClose = () => {
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+    settingsWin = null;
+  };
+  // override close
+  const closeWrapper = () => {
+    origClose();
+    onClose();
+  };
+  closeBtn.removeEventListener('click', closeWin);
+  closeBtn.addEventListener('click', closeWrapper);
+
+  return { close: closeWrapper, toggleMaximize: null };
+}
+
+// ── createWindow (original) ──────────────────────────────────────
 function createWindow({ title, url, x, y, w, h, onClose }) {
   const area = document.getElementById('windows-area');
   const areaH = area.offsetHeight;
 
-  // Clamp initial position
   x = Math.max(0, Math.min(x, area.offsetWidth - w));
   y = Math.max(0, Math.min(y, areaH - h));
 
-  // DOM
   const el = document.createElement('div');
   el.className = 'app-window';
   el.style.left = x + 'px';
@@ -192,24 +385,13 @@ function createWindow({ title, url, x, y, w, h, onClose }) {
   `;
 
   area.appendChild(el);
-
-  // Animate open
   requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('open')));
-
-  // Bring to front on click
   el.addEventListener('mousedown', () => { el.style.zIndex = ++zTop; }, true);
 
-  // State
   let rect = { x, y, w, h };
-  let prevRect = null;
   let maximized = false;
 
-  // ── Maximize ────────────────────────────────────────────────────
-  el.querySelector('.maximize').addEventListener('click', () => {
-    toggleMaximize(el);
-  });
-
-  // ── Close ───────────────────────────────────────────────────────
+  el.querySelector('.maximize').addEventListener('click', () => { toggleMaximize(el); });
   function closeWin() {
     el.classList.remove('open');
     el.style.transform = 'scale(0.93)';
@@ -218,10 +400,8 @@ function createWindow({ title, url, x, y, w, h, onClose }) {
   }
   el.querySelector('.close').addEventListener('click', closeWin);
 
-  // ── Drag ────────────────────────────────────────────────────────
   const titlebar = el.querySelector('.window-titlebar');
   let dragging = false, dragOX = 0, dragOY = 0;
-
   titlebar.addEventListener('mousedown', (e) => {
     if (e.target.closest('.window-controls')) return;
     if (maximized) return;
@@ -231,15 +411,12 @@ function createWindow({ title, url, x, y, w, h, onClose }) {
     el.classList.add('dragging');
     e.preventDefault();
   });
-
   titlebar.addEventListener('dblclick', (e) => {
     if (e.target.closest('.window-controls')) return;
     toggleMaximize(el);
   });
 
-  // ── Resize ──────────────────────────────────────────────────────
   let resizing = false, resDir = '', resSX, resSY, resSW, resSH, resSL, resST;
-
   el.querySelectorAll('.rh').forEach(handle => {
     handle.addEventListener('mousedown', (e) => {
       resizing = true;
@@ -247,68 +424,53 @@ function createWindow({ title, url, x, y, w, h, onClose }) {
       resSX = e.clientX; resSY = e.clientY;
       resSW = el.offsetWidth; resSH = el.offsetHeight;
       resSL = el.offsetLeft;  resST = el.offsetTop;
-      e.preventDefault();
-      e.stopPropagation();
+      e.preventDefault(); e.stopPropagation();
     });
   });
-
-  // Global mouse handlers
-  document.addEventListener('mousemove', onMouseMove);
-  document.addEventListener('mouseup', onMouseUp);
 
   function onMouseMove(e) {
     if (dragging) {
       const nx = e.clientX - dragOX;
       const ny = Math.max(0, e.clientY - dragOY);
-      el.style.left = nx + 'px';
-      el.style.top  = ny + 'px';
+      el.style.left = nx + 'px'; el.style.top = ny + 'px';
       rect.x = nx; rect.y = ny;
       return;
     }
     if (!resizing) return;
-
-    const dx = e.clientX - resSX;
-    const dy = e.clientY - resSY;
+    const dx = e.clientX - resSX, dy = e.clientY - resSY;
     let nx = resSL, ny = resST, nw = resSW, nh = resSH;
-
     if (resDir.includes('e')) nw = Math.max(280, resSW + dx);
     if (resDir.includes('s')) nh = Math.max(180, resSH + dy);
     if (resDir.includes('w')) { nw = Math.max(280, resSW - dx); nx = resSL + resSW - nw; }
     if (resDir.includes('n')) { nh = Math.max(180, resSH - dy); ny = resST + resSH - nh; }
-
-    el.style.left   = nx + 'px'; el.style.top    = ny + 'px';
-    el.style.width  = nw + 'px'; el.style.height = nh + 'px';
+    el.style.left = nx + 'px'; el.style.top = ny + 'px';
+    el.style.width = nw + 'px'; el.style.height = nh + 'px';
     rect = { x: nx, y: ny, w: nw, h: nh };
   }
-
   function onMouseUp() {
     if (dragging) { dragging = false; el.classList.remove('dragging'); }
     resizing = false;
   }
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mouseup', onMouseUp);
 
-  // Store previous position/size for restore
   el.dataset.prevLeft = rect.x + 'px';
   el.dataset.prevTop = rect.y + 'px';
   el.dataset.prevWidth = rect.w + 'px';
   el.dataset.prevHeight = rect.h + 'px';
 
-  // ── toggleMaximize function
   function toggleMaximize(winEl) {
     if (winEl.classList.contains('maximized')) {
-      // Restore to previous size
       winEl.classList.remove('maximized');
       winEl.style.left = winEl.dataset.prevLeft || '100px';
       winEl.style.top = winEl.dataset.prevTop || '100px';
       winEl.style.width = winEl.dataset.prevWidth || '400px';
       winEl.style.height = winEl.dataset.prevHeight || '300px';
     } else {
-      // Save current size
       winEl.dataset.prevLeft = winEl.style.left;
       winEl.dataset.prevTop = winEl.style.top;
       winEl.dataset.prevWidth = winEl.style.width;
       winEl.dataset.prevHeight = winEl.style.height;
-
-      // Maximize
       winEl.classList.add('maximized');
       winEl.style.left = '0px';
       winEl.style.top = '0px';
@@ -320,12 +482,10 @@ function createWindow({ title, url, x, y, w, h, onClose }) {
   return { close: closeWin, toggleMaximize };
 }
 
-// ── Helper ───────────────────────────────────────────────────────
 function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// ── Popup windows from postMessage ───────────────────────────────
 window.addEventListener('message', (e) => {
   if (e.data && e.data.type === '__workspace_open__' && typeof e.data.url === 'string') {
     createWindow({
@@ -340,30 +500,23 @@ window.addEventListener('message', (e) => {
   }
 });
 
-// ── ESC key handler ──────────────────────────────────────────────
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     const fullscreenLayer = document.getElementById('fullscreen-layer');
     const workspace = document.getElementById('workspace');
-
     if (isInWorkspace) {
-      // Fade out workspace, show fullscreen iframe
       workspace.classList.remove('active');
       fullscreenLayer.classList.remove('hidden');
       isInWorkspace = false;
       workspaceLoaded = false;
     } else {
-      // Hide fullscreen iframe, show loading, then workspace
       fullscreenLayer.classList.add('hidden');
       showPhase('loading');
-      runLoadingScreen(() => {
-        showPhase('explore');
-      });
+      runLoadingScreen(() => { showPhase('explore'); });
     }
   }
 });
 
-// ── Resize maximized windows on fullscreen change or resize
 function resizeMaximizedWindows() {
   document.querySelectorAll('.app-window.maximized').forEach(win => {
     win.style.left = '0px';
@@ -372,15 +525,8 @@ function resizeMaximizedWindows() {
     win.style.height = window.innerHeight + 'px';
   });
 }
-
-// Detect browser fullscreen change
-document.addEventListener('fullscreenchange', () => {
-  resizeMaximizedWindows();
-});
-// Also handle window resize (like entering browser fullscreen)
-window.addEventListener('resize', () => {
-  resizeMaximizedWindows();
-});
+document.addEventListener('fullscreenchange', resizeMaximizedWindows);
+window.addEventListener('resize', resizeMaximizedWindows);
 </script>
 </body>
 </html>
