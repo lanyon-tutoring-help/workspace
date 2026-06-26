@@ -1,0 +1,342 @@
+/* ── Reset and base styles ─────────────────────────────────── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Courier New', Courier, monospace;
+  background: #0a0a0a;
+  color: #e0e0e0;
+  overflow: hidden;
+  width: 100vw;
+  height: 100vh;
+  user-select: none;
+}
+
+/* ── Fullscreen iframe layer ─────────────────────────────────── */
+#fullscreen-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  opacity: 1;
+  transition: opacity 0.28s ease;
+  pointer-events: auto;
+}
+#fullscreen-layer.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+#fullscreen-layer iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+/* ── Phase screens ───────────────────────────────────────────── */
+.phase {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.28s ease;
+  pointer-events: none;
+}
+.phase.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Loading screen */
+#ph-loading .loading-lines {
+  width: 480px;
+  max-width: 90vw;
+  font-size: 0.75rem;
+  color: #555;
+  line-height: 1.8;
+}
+#ph-loading .loading-lines .line {
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+#ph-loading .loading-lines .line.show { opacity: 1; transform: none; }
+#ph-loading .loading-lines .line.bright { color: #e0e0e0; }
+#ph-loading .loading-lines .line.dim { color: #333; }
+
+.progress-bar-wrap {
+  width: 480px;
+  max-width: 90vw;
+  height: 1px;
+  background: #1a1a1a;
+  margin-top: 20px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: #444;
+  width: 0%;
+  transition: width 0.1s linear;
+}
+
+/* Explore screen */
+#ph-explore .label {
+  font-size: 0.65rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #555;
+  margin-bottom: 16px;
+}
+#ph-explore .ready {
+  font-size: 0.8rem;
+  color: #333;
+  margin-bottom: 28px;
+}
+#ph-explore .btn-explore {
+  padding: 10px 32px;
+  border: 1px solid #333;
+  background: transparent;
+  color: #e0e0e0;
+  font-family: inherit;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.6s ease, transform 0.6s ease, border-color 0.2s, background 0.2s;
+}
+#ph-explore.active .btn-explore {
+  opacity: 1;
+  transform: none;
+}
+#ph-explore .btn-explore:hover {
+  border-color: #555;
+  background: #111;
+}
+
+/* Welcome notification */
+#ph-welcome .notif {
+  border: 1px solid #222;
+  background: #0d0d0d;
+  padding: 24px 28px;
+  width: 380px;
+  max-width: 90vw;
+}
+#ph-welcome .notif-header {
+  font-size: 0.6rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #555;
+  margin-bottom: 12px;
+}
+#ph-welcome .notif-title {
+  font-size: 0.85rem;
+  color: #e0e0e0;
+  margin-bottom: 8px;
+}
+#ph-welcome .notif-body {
+  font-size: 0.7rem;
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+#ph-welcome .btn-continue {
+  padding: 8px 20px;
+  border: 1px solid #333;
+  background: transparent;
+  color: #e0e0e0;
+  font-family: inherit;
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+#ph-welcome .btn-continue:hover {
+  border-color: #555;
+  background: #111;
+}
+
+/* ── Workspace ───────────────────────────────────────────────── */
+#workspace {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transition: opacity 0.28s ease;
+  pointer-events: none;
+  z-index: 10;
+  background-image: url('https://github.com/seraph-games/seraph/blob/main/images/backgrounds/seraph/homebg.jpg?raw=true');
+  background-size: cover;
+  background-position: center;
+}
+#workspace.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+#windows-area {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Taskbar ─────────────────────────────────────────────────── */
+#taskbar {
+  height: 48px;
+  background: #0d0d0d;
+  border-top: 1px solid #1a1a1a;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 12px;
+  flex-shrink: 0;
+}
+.taskbar-icon {
+  width: 36px;
+  height: 36px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #555;
+  font-family: inherit;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  position: relative;
+}
+.taskbar-icon:hover {
+  color: #e0e0e0;
+  border-color: #2a2a2a;
+  background: #111;
+}
+.taskbar-icon.open {
+  color: #aaa;
+  border-color: #333;
+  background: #111;
+}
+.taskbar-icon .icon-glyph { font-size: 14px; line-height: 1; }
+.taskbar-icon .icon-label { font-size: 0.45rem; letter-spacing: 0.05em; text-transform: uppercase; }
+.taskbar-clock {
+  margin-left: auto;
+  font-size: 0.65rem;
+  color: #444;
+  letter-spacing: 0.05em;
+  min-width: 40px;
+  text-align: right;
+}
+
+/* ── App Window ──────────────────────────────────────────────── */
+.app-window {
+  position: absolute;
+  background: #0d0d0d;
+  border: 1px solid #1e1e1e;
+  display: flex;
+  flex-direction: column;
+  min-width: 280px;
+  min-height: 180px;
+  opacity: 0;
+  transform: scale(0.93);
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.15s ease;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  z-index: 10;
+}
+.app-window.open {
+  opacity: 1;
+  transform: scale(1);
+}
+.app-window.dragging {
+  transition: box-shadow 0.15s ease;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.85);
+  transform: scale(1.002);
+  z-index: 100;
+}
+.app-window.transitioning {
+  transition: left 0.22s cubic-bezier(0.4,0,0.2,1),
+              top 0.22s cubic-bezier(0.4,0,0.2,1),
+              width 0.22s cubic-bezier(0.4,0,0.2,1),
+              height 0.22s cubic-bezier(0.4,0,0.2,1),
+              opacity 0.2s cubic-bezier(0.4,0,0.2,1),
+              transform 0.2s cubic-bezier(0.4,0,0.2,1),
+              box-shadow 0.15s ease;
+}
+.window-titlebar {
+  height: 34px;
+  background: #111;
+  border-bottom: 1px solid #1a1a1a;
+  display: flex;
+  align-items: center;
+  padding: 0 10px 0 12px;
+  cursor: grab;
+  flex-shrink: 0;
+}
+.window-titlebar:active { cursor: grabbing; }
+.window-title {
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #666;
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.window-controls {
+  display: flex;
+  gap: 4px;
+  cursor: default;
+}
+.window-btn {
+  width: 22px;
+  height: 22px;
+  border: 1px solid #2a2a2a;
+  background: transparent;
+  color: #444;
+  font-family: inherit;
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  line-height: 1;
+}
+.window-btn:hover { color: #e0e0e0; border-color: #555; background: #1a1a1a; }
+.window-btn.close:hover { color: #e05555; border-color: #e05555; }
+.window-content {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+.window-content iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+/* ── Resize handles ──────────────────────────────────────────── */
+.rh { position: absolute; z-index: 200; }
+.rh-n  { top: 0;    left: 4px;  right: 4px;  height: 4px;  cursor: n-resize;  }
+.rh-s  { bottom: 0; left: 4px;  right: 4px;  height: 4px;  cursor: s-resize;  }
+.rh-e  { right: 0;  top: 4px;   bottom: 4px; width: 4px;   cursor: e-resize;  }
+.rh-w  { left: 0;   top: 4px;   bottom: 4px; width: 4px;   cursor: w-resize;  }
+.rh-ne { top: 0;    right: 0;   width: 12px; height: 12px; cursor: ne-resize; }
+.rh-nw { top: 0;    left: 0;    width: 12px; height: 12px; cursor: nw-resize; }
+.rh-se { bottom: 0; right: 0;   width: 12px; height: 12px; cursor: se-resize; }
+.rh-sw { bottom: 0; left: 0;    width: 12px; height: 12px; cursor: sw-resize; }
+
+/* ── Scrollbar ───────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: #0a0a0a; }
+::-webkit-scrollbar-thumb { background: #222; }
