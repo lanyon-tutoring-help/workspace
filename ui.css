@@ -234,6 +234,44 @@ body {
   text-align: right;
 }
 
+/* ── Settings gear button (positioned right before clock) ────── */
+#btn-settings {
+  background: none;
+  border: none;
+  color: #ccc;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+  margin-left: auto; /* pushes it to the right, next to clock */
+}
+#btn-settings:hover {
+  color: #fff;
+}
+
+/* ── Settings dropdown inside window ─────────────────────────── */
+.settings-dropdown {
+  width: 100%;
+  padding: 6px 8px;
+  background: #1e1e1e;
+  color: #eee;
+  border: 1px solid #444;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-top: 6px;
+}
+.settings-dropdown:focus {
+  outline: none;
+  border-color: #888;
+}
+.settings-label {
+  font-size: 13px;
+  color: #aaa;
+  margin-bottom: 2px;
+}
+
 /* ── App Window ──────────────────────────────────────────────── */
 .app-window {
   position: absolute;
@@ -340,40 +378,3 @@ body {
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: #0a0a0a; }
 ::-webkit-scrollbar-thumb { background: #222; }
-
-/* ── Settings gear button (taskbar) ──────────────────────────── */
-#btn-settings {
-  background: none;
-  border: none;
-  color: #ccc;
-  font-size: 20px;
-  cursor: pointer;
-  padding: 0 10px;
-  display: flex;
-  align-items: center;
-  transition: color 0.2s;
-}
-#btn-settings:hover {
-  color: #fff;
-}
-
-/* ── Settings dropdown inside window ─────────────────────────── */
-.settings-dropdown {
-  width: 100%;
-  padding: 6px 8px;
-  background: #1e1e1e;
-  color: #eee;
-  border: 1px solid #444;
-  border-radius: 4px;
-  font-size: 14px;
-  margin-top: 6px;
-}
-.settings-dropdown:focus {
-  outline: none;
-  border-color: #888;
-}
-.settings-label {
-  font-size: 13px;
-  color: #aaa;
-  margin-bottom: 2px;
-}
