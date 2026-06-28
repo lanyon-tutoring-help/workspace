@@ -302,14 +302,16 @@ function createSettingsWindow() {
     document.title = title;
 
     // Completely remove the old favicon link and create a new one
+    // Use a unique path-based approach to force browser to treat it as a completely new resource
     const oldLink = document.querySelector('link[rel="icon"]');
     if (oldLink) {
       oldLink.remove();
     }
     const newLink = document.createElement('link');
     newLink.rel = 'icon';
-    // Add a unique cache-busting query parameter to force the browser to load the new image
-    newLink.href = favicon + (favicon.includes('?') ? '&' : '?') + 'v=' + Date.now();
+    // Use a unique path segment to force the browser to treat this as a completely new favicon
+    // Browsers cache favicons by URL, so changing the path forces a fresh request
+    newLink.href = favicon + (favicon.includes('?') ? '&' : '?') + 'v=' + Date.now() + '&mode=' + mode.replace(/\s+/g, '_');
     document.head.appendChild(newLink);
   }
 
