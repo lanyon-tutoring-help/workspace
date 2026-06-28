@@ -53,6 +53,10 @@ Press ESC at any time to cloak this page.</div>
       <span class="icon-glyph">◈</span>
       <span class="icon-label">Games</span>
     </button>
+    <button class="taskbar-icon" id="btn-chat" onclick="toggleChat()" title="Chat">
+      <span class="icon-glyph">🗨️</span>
+      <span class="icon-label">Chat</span>
+    </button>
     <div class="taskbar-clock" id="clock"></div>
   </div>
 </div>
@@ -61,6 +65,7 @@ Press ESC at any time to cloak this page.</div>
 // ── URLs ────────────────────────────────────────────────────────
 const SEARCH_URL = 'https://web-proxy--coder83231.replit.app/browser/';
 const GAMES_URL  = 'https://lanyon-tutoring-help.github.io/untitled-games/';
+const CHAT_URL   = 'https://chat.openai.com/';
 
 // ── Phase management ────────────────────────────────────────────
 let currentPhase = 'loading';
@@ -136,6 +141,7 @@ function startClock() {
 // ── Window manager ───────────────────────────────────────────────
 let searchWin = null;
 let gamesWin  = null;
+let chatWin   = null;
 let zTop = 10;
 
 function toggleSearch() {
@@ -146,6 +152,11 @@ function toggleSearch() {
 function toggleGames() {
   if (gamesWin) { gamesWin.close(); gamesWin = null; document.getElementById('btn-games').classList.remove('open'); }
   else { gamesWin = createWindow({ title: 'Games', url: GAMES_URL, x: 120, y: 80, w: 860, h: 560, onClose: () => { gamesWin = null; document.getElementById('btn-games').classList.remove('open'); } }); document.getElementById('btn-games').classList.add('open'); }
+}
+
+function toggleChat() {
+  if (chatWin) { chatWin.close(); chatWin = null; document.getElementById('btn-chat').classList.remove('open'); }
+  else { chatWin = createWindow({ title: 'Chat', url: CHAT_URL, x: 160, y: 100, w: 800, h: 600, onClose: () => { chatWin = null; document.getElementById('btn-chat').classList.remove('open'); } }); document.getElementById('btn-chat').classList.add('open'); }
 }
 
 // ── createWindow ─────────────────────────────────────────────────
